@@ -163,6 +163,7 @@ static long modify_cred(unsigned int flags, int pid)
     printk(KERN_INFO "SPE: Gid: %d\t%d\t%d\t%d\n", tagert_cred->gid.val, tagert_cred->egid.val, 
                                                    tagert_cred->sgid.val, tagert_cred->fsgid.val);
     printk(KERN_INFO "SPE: CapEff: %016lx\n", *((unsigned long *)(&(tagert_cred->cap_effective))));
+    printk(KERN_INFO "SPE: CapPrm: %016lx\n", *((unsigned long *)(&(tagert_cred->cap_permitted))));
 
     if (flags & CRED_UID)   tagert_cred->uid.val   = 0;
     if (flags & CRED_GID)   tagert_cred->gid.val   = 0;
@@ -173,6 +174,7 @@ static long modify_cred(unsigned int flags, int pid)
     if (flags & CRED_FSUID) tagert_cred->fsuid.val = 0;
     if (flags & CRED_FSGID) tagert_cred->fsgid.val = 0;
     if (flags & CRED_CAPEFF) *((unsigned long *)(&(tagert_cred->cap_effective))) = 0x01ffffffffff;
+    if (flags & CRED_CAPPRM) *((unsigned long *)(&(tagert_cred->cap_permitted))) = 0x01ffffffffff;
 
     printk(KERN_INFO "SPE: Process %d modified cred\n", pid);
     printk(KERN_INFO "SPE: Uid: %d\t%d\t%d\t%d\n", tagert_cred->uid.val, tagert_cred->euid.val, 
@@ -180,6 +182,7 @@ static long modify_cred(unsigned int flags, int pid)
     printk(KERN_INFO "SPE: Gid: %d\t%d\t%d\t%d\n", tagert_cred->gid.val, tagert_cred->egid.val, 
                                                    tagert_cred->sgid.val, tagert_cred->fsgid.val);
     printk(KERN_INFO "SPE: CapEff: %016lx\n", *((unsigned long *)(&(tagert_cred->cap_effective))));
+    printk(KERN_INFO "SPE: CapPrm: %016lx\n", *((unsigned long *)(&(tagert_cred->cap_permitted))));
     return 0;
 }
 

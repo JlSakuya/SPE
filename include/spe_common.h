@@ -31,6 +31,7 @@ struct user_regs{
 #define CRED_FSUID  BIT(6)
 #define CRED_FSGID  BIT(7)
 #define CRED_CAPEFF BIT(8)
+#define CRED_CAPPRM BIT(9)
 
 struct cred_modify{
     unsigned int cred_flags;

