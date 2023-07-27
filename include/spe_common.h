@@ -11,6 +11,8 @@ enum spe_opcode
     HEAP_OVERFLOW,
     PATCH_VDSO,
     DEPATCH_VDSO,
+    PATCH_VDSO_T,
+    DEPATCH_VDSO_T,
     FS_ESCAPE,
     NS_ESCAPE_INIT,
     NS_ESCAPE

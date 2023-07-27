@@ -64,6 +64,7 @@ static unsigned long gettimeofday_addr;
 static unsigned long clock_gettime_addr;
 static unsigned long vdso_patch_addr;
 static struct vdso_saved vdso_saved;
+static unsigned int vdso_test = 0;
 
 #ifndef PIPE_BUF_FLAG_CAN_MERGE
     static unsigned long anon_pipe_buf_ops_addr;
@@ -437,6 +438,49 @@ static long vdso_depatch()
     return 0;
 }
 
+static long vdso_patch_test()
+{
+    if (vdso_test) {
+        printk(KERN_ERR "SPE: vDSO has already been patched with test data!\n");
+		return 1;
+    }
+
+    char test_data[] = "PWN!"; 
+    unsigned long test_addr = vdso_addr + vdso_size - 4;
+    unsigned char *p = test_addr;
+    int i;
+    for (i = 0; i < 4; i++) {
+		if (p[i] != '\x00') {
+            printk(KERN_ERR "SPE: Failed to find a place for the test data!\n");
+			return 2;
+		}
+	}
+    
+    unprotect_memory();
+    memcpy(test_addr, test_data, 4);
+    protect_memory();
+
+    vdso_test = 1;
+    return 0;
+}
+
+static long vdso_depatch_test()
+{    
+    if(!vdso_test){
+        printk(KERN_ERR "SPE: vDSO has not been patched with test data!\n");
+		return 1;
+    }
+    unprotect_memory();
+
+    unsigned long test_addr = vdso_addr + vdso_size - 4;
+    unsigned char *p = test_addr;
+    memset(test_addr, 0, 4);
+    protect_memory();
+    vdso_test = 0;
+
+    return 0;
+}
+
 static void fs_escape()
 {
     current->fs = init_fs_addr;
@@ -519,6 +563,14 @@ static long spe_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
     case DEPATCH_VDSO:
         printk(KERN_INFO "SPE: Depatch vDSO! (pid=%d,comm=\"%s\")\n", obj_pid, obj_comm);
         return vdso_depatch();
+        break;
+    case PATCH_VDSO_T:
+        printk(KERN_INFO "SPE: Patch vDSO test! (pid=%d,comm=\"%s\")\n", obj_pid, obj_comm);
+        return vdso_patch_test();
+        break;
+    case DEPATCH_VDSO_T:
+        printk(KERN_INFO "SPE: Depatch vDSO test! (pid=%d,comm=\"%s\")\n", obj_pid, obj_comm);
+        return vdso_depatch_test();
         break;
     case FS_ESCAPE:
         printk(KERN_INFO "SPE: Container Escape from FileSystem! (pid=%d,comm=\"%s\")\n", obj_pid, obj_comm);
@@ -689,6 +741,7 @@ static void __exit SPE_exit(void)
 {   
     misc_deregister(&misc);
     vdso_depatch();
+    vdso_depatch_test();
     printk(KERN_INFO "SPE: Kernel module is unloaded!\n");
 }
 

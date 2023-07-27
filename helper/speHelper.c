@@ -36,7 +36,9 @@ enum VDSO_MODE
 {
 	VDSO_NULL = 0,
 	VDSO_PATCH,
-	VDSO_DEPATCH
+	VDSO_DEPATCH,
+	VDSO_PATCH_T,
+	VDSO_DEPATCH_T
 };
 
 #define ESCAPE_F	BIT(0)
@@ -898,6 +900,45 @@ void vdso_depatch()
 	spe_exit(1);
 }
 
+void vdso_patch_test()
+{
+	long ret = ioctl(spe_fd, PATCH_VDSO_T, NULL);
+	switch (ret){
+		case 0:
+			logi("vdso has been patched with test data.");	
+			spe_exit(0);
+			break;
+		case 1:
+			logw("vdso has already been patched with test data.");
+			break;
+		case 2:
+			loge("vdso can not be patched with test data!");
+			break;
+		default:
+			loge("Unknown Error!");
+			break;
+	}
+	spe_exit(1);
+}
+
+void vdso_depatch_test()
+{
+	long ret = ioctl(spe_fd, DEPATCH_VDSO_T, NULL);
+	switch (ret){
+		case 0:
+			logi("vdso has been depatched with test data.");	
+			spe_exit(0);
+			break;
+		case 1:
+			logw("vdso has not been patched with test data.");
+			break;
+		default:
+			loge("Unknown Error!");
+			break;
+	}
+	spe_exit(1);
+}
+
 void vdso_usage(int status)
 {
 	printf("Usage: %s vdso [Opiton]...\n", program_name);
@@ -907,6 +948,9 @@ void vdso_usage(int status)
 			  to the specified target.\n",stdout);
 	fputs("  -d, --depatch           Depatch vdso. You need to depatch vdso before each\n\
 			  patch of vdso.\n",stdout);
+	fputs("  -T, --patchT            Since it is sometimes difficult to patch vdso automatically,\n\
+			  use test data to patch vdso for testing requirements.\n",stdout);
+	fputs("  -D, --depatchT          Depatch vdso with test data.\n",stdout);
 	fputs("Caution:\n",stdout);
 	fputs("  You need to make sure that the file /tmp/.x does not exist in the host\n\ 
   filesystem before waiting for the reverse shell.\n\n",stdout);
@@ -925,10 +969,12 @@ void patch_vdso()
 		static struct option longOpts[] = {
 			{"target", required_argument, NULL, 't'},
 			{"depatch", no_argument, NULL, 'd'},
+			{"depatchT", no_argument, NULL, 'D'},
+			{"patchT", no_argument, NULL, 'T'},
 			{"help", no_argument, NULL, 'h'},
 			{0, 0, 0, 0}
 		};
-		c = getopt_long(program_argc, program_argv, "t:dh", longOpts, &optId);
+		c = getopt_long(program_argc, program_argv, "t:dDTh", longOpts, &optId);
 		if (c==-1)
 			break;
 		switch (c){
@@ -946,6 +992,20 @@ void patch_vdso()
 					spe_exit(1);
 				}
 				vdso_mode = VDSO_DEPATCH;
+				break;
+			case 'T':
+				if (vdso_mode != VDSO_NULL){
+					logw("vdso takes only one parameter.");
+					spe_exit(1);
+				}
+				vdso_mode = VDSO_PATCH_T;
+				break;
+			case 'D':
+				if (vdso_mode != VDSO_NULL){
+					logw("vdso takes only one parameter.");
+					spe_exit(1);
+				}
+				vdso_mode = VDSO_DEPATCH_T;
 				break;
 			case 'h':
 				vdso_usage(0);
@@ -966,6 +1026,12 @@ void patch_vdso()
 			break;
 		case VDSO_DEPATCH:
 			vdso_depatch();
+			break;
+		case VDSO_PATCH_T:
+			vdso_patch_test();
+			break;
+		case VDSO_DEPATCH_T:
+			vdso_depatch_test();
 			break;
 		default:
 			loge("Unknown Error!");
